@@ -1,0 +1,5 @@
+matplotlib
+networkx
+pcst_fast
+pytest
+tqdm 
