@@ -350,6 +350,7 @@ def modified_connected_component(graph: nx.Graph, vectorised_graph: dict, source
         adj[v].append(u)
         if source in [u, v]:
             n_degree += 1
+
     n = len(adj)
     seen = {source}
     nextlevel = [source]
@@ -399,11 +400,12 @@ def routing_star(params: dict):
     """
 
     datasets = -1 * np.ones((5, params["reps"]))
+    node_usage = np.zeros((len(params["useable_graph"].nodes)))
+    node_id = {n: i for i, n in enumerate(params["useable_graph"].nodes)}
     # datasets are gen time, fideity, tree size, f_exact-f_approx,average age
     vectorised_graph = setup_g_prime(params["useable_graph"])
     source_node = params["source_node"]
     destination_nodes = set(params["users"]) - set([source_node])
-
     for i in range(params["reps"]):
         vectorised_graph["g_prime"] = np.zeros(
             vectorised_graph["g_prime"].shape, dtype=int
@@ -452,6 +454,9 @@ def routing_star(params: dict):
                             ]
                         )
                         n_ghz += 1
+                        for node in routing_solution.nodes():
+                            node_usage[node_id[node]] += 1
+
 
                         graph_prime.remove_edges_from(routing_solution.edges())
 
@@ -467,6 +472,7 @@ def routing_star(params: dict):
                 )
 
     data = tuple(list(datasets[i]) for i in range(len(datasets)))
+    data = data + (list(node_usage),)
     metadata = {
         "reps": params["reps"],
         "identifier": params["identifier"],
@@ -503,6 +509,8 @@ def routing_tree(params: dict):
                 - Number of timesteps.
     """
     datasets = -1 * np.ones((5, params["reps"]))
+    node_usage = np.zeros((len(params["useable_graph"].nodes)))
+    node_id = {n: i for i, n in enumerate(params["useable_graph"].nodes)}
     # datasets are gen time, fideity, tree size, f_exact-f_approx,average age
     vectorised_graph = setup_g_prime(params["useable_graph"])
     users = params["users"]
@@ -556,7 +564,8 @@ def routing_tree(params: dict):
                         [graph_prime[u][v]["tau"] for u, v in routing_solution.edges()]
                     )
                     n_ghz += 1
-
+                    for node in routing_solution.nodes():
+                        node_usage[node_id[node]] += 1
                     graph_prime.remove_edges_from(routing_solution.edges())
                     connected_component = nx.node_connected_component(
                         graph_prime, users[0]
@@ -569,6 +578,8 @@ def routing_tree(params: dict):
                 )
 
     data = tuple(list(datasets[i]) for i in range(len(datasets)))
+    data = data + (list(node_usage),)
+
     metadata = {
         "reps": params["reps"],
         "identifier": params["identifier"],

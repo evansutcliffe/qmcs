@@ -253,7 +253,7 @@ def star_from_dict(graph: nx.Graph, flowdict: dict):
     nx.Graph: A new graph with nodes from the original graph and edges based on the flow dictionary.
     """
     star = graph.__class__()
-    star.add_nodes_from(graph.nodes(data=True))
+    # star.add_nodes_from(graph.nodes(data=True))
     for node_u, value in flowdict.items():
         for node_v, v in value.items():
             if v > 0 and "super_sink" not in [node_u, node_v]:
@@ -280,13 +280,17 @@ def get_best_source_and_star(
     Raises:
     ValueError: If no valid star subgraph is found.
     """
+    candidate_nodes = list(graph.nodes())
+    if source_node_first_guess is not None:
+        candidate_nodes = list([source_node_first_guess]) + candidate_nodes
+
     best_source = None
     best_cost = np.inf
     best_flowdict = None
     # #aux_graph = make_auxillary_graph(
     #     graph, users=[], weight=weight, source=list(graph.nodes())[0]
     # )
-    for source in list([source_node_first_guess] + list(graph.nodes())):
+    for source in candidate_nodes:
         cost, flowdict, is_valid = get_star(graph, source, users, weight)
         if is_valid and cost < best_cost:
             best_cost = cost
